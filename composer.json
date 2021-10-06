@@ -1,0 +1,13 @@
+{
+    "name": "whiteboard/readdle",
+    "description": "Test task for readdle whiteboard",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "Whiteboard\\Readdle\\": "src/"
+        }
+    },
+    "require": {
+        "guzzlehttp/guzzle": "^7.3"
+    }
+}

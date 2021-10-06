@@ -1,0 +1,13 @@
+version: "3"
+
+services:
+  php:
+    container_name: php_readdle
+    build: ./etc/php
+    volumes:
+      - ./:/srv/src/readdle
+    networks:
+      - readdle
+
+networks:
+  readdle:
