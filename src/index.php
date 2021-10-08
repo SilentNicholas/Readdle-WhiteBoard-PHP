@@ -4,27 +4,52 @@ declare(strict_types=1);
 require_once '../vendor/autoload.php';
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\Utils;
 
 const CLIENT_ID = 'id';
 const CLIENT_SECRET = 'secret';
-const REDIRECT_URL = 'test.cpm';
-
+const REDIRECT_URL = 'url';
+const CODE = 'code';
 
 $httpClient = new Client([
-    'base_uri' => sprintf('https://app.asana.com/-/', CLIENT_ID, REDIRECT_URL),
     'timeout' => 2.0
 ]);
 
 
-$authResponseBody = $httpClient->post(
-    'oauth_token',
-    [
+$authResponseBody = $httpClient->request("POST", 'https://app.asana.com/-/oauth_token', [
         'form_params' => [
             'grant_type' => 'authorization_code',
             'client_id' => CLIENT_ID,
             'client_secret' => CLIENT_SECRET,
             'redirect_uri' => REDIRECT_URL,
-            'code' => "some code"
+            'code' => CODE
         ]
     ]
-)->getBody();
+)->getBody()->getContents();
+
+$accessToken = json_decode($authResponseBody, true)['access_token'] ?? '';
+$requestHeaders = ['Authorization' => 'Bearer ' . $accessToken];
+
+$createTaskResponse = $httpClient->request('POST', 'https://app.asana.com/api/1.0/tasks', [
+    'headers' => $requestHeaders,
+    'form_params' => [
+        'name' => 'Please, review Skalenko Nikolay integration',
+        'projects' => [1201134145523440]
+    ]
+])->getBody()->getContents();
+
+$taskId = json_decode($createTaskResponse, true)['data']['gid'] ?? '';
+
+$response = $httpClient->request('POST', "https://app.asana.com/api/1.0/tasks/{$taskId}/attachments", [
+    'headers' => $requestHeaders,
+    'multipart' => [
+        [
+            'name' => 'name',
+            'contents' => 'whiteboard.txt',
+        ],
+        [
+            'name' => 'file',
+            'contents' => Utils::tryFopen('./Resources/whiteboard.txt', 'r'),
+        ]
+    ]
+]);
